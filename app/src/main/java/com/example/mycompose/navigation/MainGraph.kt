@@ -11,9 +11,6 @@ import com.example.mycompose.ui.screens.home.HomeScreen
 
 fun NavGraphBuilder.mainGraph(navController: NavController) {
 
-    // Navigate back to the previous screen
-    val navigateUp = navController.navigateUp()
-
     composable<Screen.HomeScreen> {
         HomeScreen(
             onNavigate = { imageURL ->
@@ -27,6 +24,7 @@ fun NavGraphBuilder.mainGraph(navController: NavController) {
         val args = it.toRoute<Screen.SecondScreen>()
         SecondScreen(
             imageURL = args.imageURL,
+            onBack = {navController.navigateUp()},
             onNavigate = {
                 navController.navigate(Screen.ThirdScreen) {
                 }

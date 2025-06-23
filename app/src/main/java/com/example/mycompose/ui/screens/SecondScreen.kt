@@ -3,11 +3,10 @@ package com.example.mycompose.ui.screens
 import android.annotation.SuppressLint
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -15,33 +14,52 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SecondScreen(
     onNavigate: () -> Unit,
+    onBack: () -> Unit,
     imageURL: String? = null,
 ) {
-    Scaffold { innerPadding ->
+    var webView: WebView? by remember { mutableStateOf(null) }
+
+    BackHandler {
+        if (webView?.canGoBack() == true) {
+            webView?.goBack()
+        } else {
+            onBack()
+        }
+    }
+
+    Scaffold {
         ConstraintLayout(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            val (button, webView) = createRefs()
+            val (button, WV) = createRefs()
+
             WebPageScreen(
-                modifier = Modifier.constrainAs(webView) {
+                modifier = Modifier
+                    .constrainAs(WV) {
                     top.linkTo(parent.top)
                     bottom.linkTo(button.top)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                }.fillMaxWidth(),
-                url = "https://google.com"
+                        height = Dimension.fillToConstraints
+                    },
+                onWebViewReady = { webView = it },
+                        url = "https://google.com"
             )
             ActionButton(
                 modifier = Modifier
@@ -89,7 +107,9 @@ private fun ActionButton(
 @Composable
 fun WebPageScreen(
     modifier: Modifier = Modifier,
-    url: String
+    url: String,
+    onWebViewReady: (WebView) -> Unit
+
 ) {
     AndroidView(
         factory = { context ->
@@ -97,11 +117,11 @@ fun WebPageScreen(
                 webViewClient = WebViewClient()
                 settings.javaScriptEnabled = true
                 loadUrl(url)
+                onWebViewReady(this)
             }
         },
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight()
             .background(Color.White)
     )
 }
@@ -110,5 +130,5 @@ fun WebPageScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun HomeScreenPreview() {
-    SecondScreen(onNavigate = {})
+    SecondScreen({},{})
 }

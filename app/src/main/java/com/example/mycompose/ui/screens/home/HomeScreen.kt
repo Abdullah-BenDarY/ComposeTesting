@@ -1,5 +1,6 @@
 package com.example.mycompose.ui.screens.home
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.mycompose.ui.utils.showMessage
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     // Using hiltViewModel to get the instance of HomeViewModel
@@ -53,12 +55,10 @@ fun HomeScreen(
     Scaffold(
         // Using Scaffold to provide snackBar support
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
-    ) { innerPadding ->
+    ) {
         // Using LazyColumn to display a list of items (Just for lazy column Testing)
         LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
                 .background(Color.White),
             verticalArrangement = Arrangement.spacedBy(8.dp),
 
