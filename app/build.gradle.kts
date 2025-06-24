@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     kotlin("plugin.serialization") version "1.9.0"
@@ -41,6 +42,10 @@ android {
     buildFeatures {
         compose = true
     }
+    @Suppress("UnstableApiUsage")
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15"
+    }
 }
 
 dependencies {
@@ -62,8 +67,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation (libs.androidx.constraintlayout.compose)
-
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.animation)
+
     implementation(libs.kotlinx.serialization.json)
 
 

@@ -1,6 +1,11 @@
 package com.example.mycompose.ui.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -37,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.mycompose.ui.screens.home.HomeViewModel
 import com.example.mycompose.ui.utils.showMessage
+import kotlinx.coroutines.delay
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -50,70 +57,89 @@ fun ThirdScreen(
     // Creating a SnackBarHostState to manage SnackBar messages
     val snackBarHostState = remember { SnackbarHostState() }
 
-
+    val visible = remember { mutableStateOf(false) }
+    // Using LaunchedEffect to delay the visibility of the content
+    LaunchedEffect(Unit) {
+        delay(200)
+        visible.value = true
+    }
 
     Scaffold(
         // Using Scaffold to provide snackBar support
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
     ) {
         // Using LazyColumn to display a list of items (Just for lazy column Testing)
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        // The LazyColumn will be animated in from the right side to left
+        AnimatedVisibility(
+            visible = visible.value,
+            // Using slideInHorizontally to animate the entry of the LazyColumn
+            enter = slideInHorizontally(
+                // animation duration of 200 milliseconds
+                animationSpec = tween(200)
+                // fullWidth -> fullWidth // The animation will slide in from the right side
+                // -fullWidth meaning leftSide
+            ) { fullWidth -> fullWidth } + fadeIn(tween(1000))
+        )
+        {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
 
-            ) {
-            // Adding a sticky header at the top of the LazyColumn
-            stickyHeader {
-                Text(
-                    text = "First",
-                    color = Color.Black,
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.LightGray)
-                )
-            }
-            item {
-                // Using ConstraintLayout to arrange the UI elements
-                ConstraintLayout(
-                    modifier = Modifier.fillMaxWidth()
-                        .wrapContentHeight()
-                        .background(Color.White)
-                        .padding(horizontal = 8.dp)
                 ) {
-                    val (image, navigation) = createRefs()
-
-                    CounterImage(
-                        painter = data.value.imageURL,
-                        modifier = Modifier.constrainAs(image) {
-                            top.linkTo(parent.top)
-                            start.linkTo(parent.start)
-                            end.linkTo(parent.end)
-                        }
-                    )
-
-                    ActionButton(
+                // Adding a sticky header at the top of the LazyColumn
+                stickyHeader {
+                    Text(
+                        text = "First",
+                        color = Color.Black,
+                        fontSize = 20.sp,
                         modifier = Modifier
-                            .constrainAs(navigation) {
-                                top.linkTo(image.bottom)
+                            .fillMaxWidth()
+                            .background(Color.LightGray)
+                    )
+                }
+                item {
+                    // Using ConstraintLayout to arrange the UI elements
+                    ConstraintLayout(
+                        modifier = Modifier.fillMaxWidth()
+                            .wrapContentHeight()
+                            .background(Color.White)
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        val (image, navigation) = createRefs()
+
+                        CounterImage(
+                            painter = data.value.imageURL,
+                            modifier = Modifier.constrainAs(image) {
+                                top.linkTo(parent.top)
                                 start.linkTo(parent.start)
                                 end.linkTo(parent.end)
-                            },
-                        onClick = onBack,
-                        contentColor = Color.White,
-                        containerColor = Color.LightGray,
-                        content = "First Screen Back"
+                            }
+                        )
+
+                        ActionButton(
+                            modifier = Modifier
+                                .constrainAs(navigation) {
+                                    top.linkTo(image.bottom)
+                                    start.linkTo(parent.start)
+                                    end.linkTo(parent.end)
+                                },
+                            onClick = onBack,
+                            contentColor = Color.White,
+                            containerColor = Color.LightGray,
+                            content = "First Screen Back"
+                        )
+
+                    }
+
+                    ShowMessage(
+                        viewModel = viewModel,
+                        snackBarHostState = snackBarHostState
                     )
-
                 }
-
-                ShowMessage(
-                    viewModel = viewModel,
-                    snackBarHostState = snackBarHostState
-                )
             }
+
         }
 
     }

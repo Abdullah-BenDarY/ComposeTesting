@@ -1,6 +1,10 @@
 package com.example.mycompose.navigation
 
-import android.annotation.SuppressLint
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -12,17 +16,17 @@ import androidx.navigation.compose.rememberNavController
 @Composable
 fun MainNavigation(
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-
-        }
-    ) {innerPadding ->
-        val navController = rememberNavController()
+    val navController = rememberNavController()
+    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         NavHost(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier
+                .padding(innerPadding),
             navController = navController,
-            startDestination = Screen.HomeScreen
+            startDestination = Screen.HomeScreen,
+            enterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { fullWidth -> fullWidth } },
+            exitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { fullWidth -> -fullWidth } },
+            popEnterTransition = { slideInHorizontally(tween(300)) { fullWidth -> -fullWidth } + fadeIn(tween(300)) },
+            popExitTransition = { slideOutHorizontally(tween(300)) { fullWidth -> fullWidth } + fadeOut(tween(300)) }
         ) {
             mainGraph(navController = navController)
         }
