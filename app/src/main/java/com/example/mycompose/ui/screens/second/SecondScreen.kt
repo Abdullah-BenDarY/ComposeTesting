@@ -1,4 +1,4 @@
-package com.example.mycompose.ui.screens
+package com.example.mycompose.ui.screens.second
 
 import android.annotation.SuppressLint
 import android.webkit.WebView

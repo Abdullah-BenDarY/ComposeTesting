@@ -2,28 +2,30 @@ package com.example.mycompose.ui.screens.home
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -31,12 +33,10 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -44,15 +44,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ChainStyle
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
-import com.example.mycompose.ui.utils.showMessage
+import com.example.mycompose.ui.ShowMessage
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -104,12 +104,13 @@ fun HomeScreen(
 
                     CounterImage(
                         painter = data.value.imageURL,
-                        modifier = Modifier.constrainAs(image) {
-                            top.linkTo(parent.top)
-                            bottom.linkTo(counter.top)
-                            start.linkTo(parent.start)
-                            end.linkTo(parent.end)
-                        }
+                        modifier = Modifier
+                            .constrainAs(image) {
+                                top.linkTo(parent.top)
+                                start.linkTo(parent.start)
+                                end.linkTo(parent.end)
+                            }
+                            .padding(8.dp)
                     )
 
                     CounterText(
@@ -130,7 +131,7 @@ fun HomeScreen(
                         onClick = viewModel::increment,
                         contentColor = Color.White,
                         containerColor = Color.Green,
-                        content = "Increment"
+                        content = {Text("Increment")}
                     )
 
                     // Decrement Button
@@ -143,7 +144,10 @@ fun HomeScreen(
                         onClick =viewModel::decrement,
                         contentColor = Color.White,
                         containerColor = Color.Red,
-                        content = "Decrement"
+                        content = {
+                            Text("Decrement")
+                        }
+
                     )
 
                     // Reset Button
@@ -169,14 +173,18 @@ fun HomeScreen(
                                 onClick = viewModel::reset,
                                 contentColor = Color.White,
                                 containerColor = Color.LightGray,
-                                content = "Reset",
-                                textModifier = Modifier.animateEnterExit(
-                                    //Nested animation
-                                    // X == horizontalScroll
-                                    // Y == verticalScroll
-                                    enter = slideInHorizontally(initialOffsetX = { -it*5 }),
-                                    exit = slideOutHorizontally(targetOffsetX = { it*5 })
-                                )
+                                content = {
+                                    Text(
+                                        text = "Reset",
+                                        modifier = Modifier.animateEnterExit(
+                                            //Nested animation
+                                            // X == horizontalScroll
+                                            // Y == verticalScroll
+                                            enter = slideInHorizontally(initialOffsetX = { -it * 5 }),
+                                            exit = slideOutHorizontally(targetOffsetX = { it * 5 })
+                                        )
+                                    )
+                                }
                             )
                         }
                         // Navigation Button
@@ -184,25 +192,63 @@ fun HomeScreen(
                             onClick = { onNavigate(data.value.imageURL ?: "") },
                             contentColor = Color.White,
                             containerColor = Color.LightGray,
-                            content = "Next"
+                            content = {
+                                Text("Next")
+                            }
                         )
                     }
 
                 }
 
                 ShowMessage(
-                    viewModel = viewModel,
+                    message = data.value.toastMessage.toString(),
                     snackBarHostState = snackBarHostState
                 )
             }
+
         }
 
     }
 }
 
+@Composable
+fun CircularMotionComposable(painter: String?, modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val angle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(10000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    val radius = 50.dp
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CounterImage(painter)
+
+        // العنصر المتحرك
+        Box(
+            modifier = Modifier
+                .offset {
+                    val x =
+                        (radius.toPx() * kotlin.math.cos(Math.toRadians(angle.toDouble()))).toInt()
+                    val y =
+                        (radius.toPx() * kotlin.math.sin(Math.toRadians(angle.toDouble()))).toInt()
+                    IntOffset(x, y)
+                }
+                .size(40.dp)
+                .background(Color.Red, CircleShape)
+        )
+    }
+}
+
 
 @Composable
-private fun CounterImage(painter: String?, modifier: Modifier) {
+private fun CounterImage(painter: String?, modifier: Modifier = Modifier) {
     // Using AsyncImage from coil to load an image from a URL
     AsyncImage(
         model = painter?: "",
@@ -227,13 +273,12 @@ private fun CounterText(count: Int, modifier: Modifier) {
 
 @Composable
 @Stable
-private fun ActionButton(
+fun ActionButton(
     modifier: Modifier = Modifier,
-    textModifier: Modifier = Modifier,
     onClick: () -> Unit,
     contentColor: Color = Color.White,
     containerColor: Color,
-    content: String
+    content: @Composable () -> Unit
 ) {
     // Using rememberUpdatedState to ensure the onClick lambda is always up-to-date and does not cause recomposition issues
     val currentOnClick by rememberUpdatedState(onClick)
@@ -244,29 +289,12 @@ private fun ActionButton(
             containerColor = containerColor,
             contentColor = contentColor
         ),
-        content = { Text(text = content, modifier = textModifier) }
+        content = {
+            content()
+        }
     )
 }
 
-
-@Composable
-private fun ShowMessage(
-    viewModel: HomeViewModel,
-    snackBarHostState: SnackbarHostState,
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        viewModel.toastEvent.collect { message ->
-            showMessage(
-                message = message.toastMessage,
-                snackBarHostState = snackBarHostState,
-                context = context,
-                scope = scope
-            )
-        }
-    }
-}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

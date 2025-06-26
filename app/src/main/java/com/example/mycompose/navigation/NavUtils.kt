@@ -12,4 +12,7 @@ sealed interface Screen {
 
     @Serializable
     data object ThirdScreen : Screen
+
+    @Serializable
+    data object Splash : Screen
 }

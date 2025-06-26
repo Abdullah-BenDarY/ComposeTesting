@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
@@ -79,8 +78,7 @@ fun ThirdScreen(
                 // fullWidth -> fullWidth // The animation will slide in from the right side
                 // -fullWidth meaning leftSide
             ) { fullWidth -> fullWidth } + fadeIn(tween(1000))
-        )
-        {
+        ) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -107,7 +105,7 @@ fun ThirdScreen(
                             .background(Color.White)
                             .padding(horizontal = 8.dp)
                     ) {
-                        val (image, navigation) = createRefs()
+                        val (image, back ) = createRefs()
 
                         CounterImage(
                             painter = data.value.imageURL,
@@ -120,7 +118,7 @@ fun ThirdScreen(
 
                         ActionButton(
                             modifier = Modifier
-                                .constrainAs(navigation) {
+                                .constrainAs(back) {
                                     top.linkTo(image.bottom)
                                     start.linkTo(parent.start)
                                     end.linkTo(parent.end)
