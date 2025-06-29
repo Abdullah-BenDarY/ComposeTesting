@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -25,7 +26,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SecondScreen(
     onNavigate: () -> Unit,
@@ -42,9 +42,10 @@ fun SecondScreen(
         }
     }
 
-    Scaffold {
+    Scaffold {addingValues ->
         ConstraintLayout(
             modifier = Modifier
+                .padding(addingValues)
                 .fillMaxSize()
         ) {
             val (button, WV) = createRefs()

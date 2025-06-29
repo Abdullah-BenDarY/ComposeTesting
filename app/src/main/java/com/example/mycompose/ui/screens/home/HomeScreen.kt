@@ -1,6 +1,8 @@
 package com.example.mycompose.ui.screens.home
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -53,14 +55,15 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.example.mycompose.ui.ShowMessage
+import java.util.jar.Manifest
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     // Using hiltViewModel to get the instance of HomeViewModel
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigate: (String) -> Unit
 ) {
+
     // Collecting the count state from the ViewModel
     val data = viewModel.count.collectAsState()
     // Creating a SnackBarHostState to manage SnackBar messages
@@ -69,10 +72,11 @@ fun HomeScreen(
     Scaffold(
         // Using Scaffold to provide snackBar support
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
-    ) {
+    ) {paddingValues ->
         // Using LazyColumn to display a list of items (Just for lazy column Testing)
         LazyColumn(
             modifier = Modifier
+                .padding(paddingValues)
                 .fillMaxSize()
                 .background(Color.White),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -294,6 +298,7 @@ fun ActionButton(
         }
     )
 }
+
 
 
 @Preview(showBackground = true, showSystemUi = true)

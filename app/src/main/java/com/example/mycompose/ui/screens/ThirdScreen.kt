@@ -1,208 +1,231 @@
 package com.example.mycompose.ui.screens
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import android.location.Location
+import android.os.Looper
+import android.util.Log
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Satellite
+import androidx.compose.material.icons.filled.Terrain
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.hilt.navigation.compose.hiltViewModel
-import coil3.compose.AsyncImage
-import com.example.mycompose.ui.screens.home.HomeViewModel
-import com.example.mycompose.ui.utils.showMessage
-import kotlinx.coroutines.delay
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.model.LatLng
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+
 @Composable
-fun ThirdScreen(
-    // Using hiltViewModel to get the instance of HomeViewModel
-    viewModel: HomeViewModel = hiltViewModel(),
-    onBack: () -> Unit
-) {
-    // Collecting the count state from the ViewModel
-    val data = viewModel.count.collectAsState()
-    // Creating a SnackBarHostState to manage SnackBar messages
-    val snackBarHostState = remember { SnackbarHostState() }
+fun ThirdScreen(onBack: () -> Unit) {
 
-    val visible = remember { mutableStateOf(false) }
-    // Using LaunchedEffect to delay the visibility of the content
-    LaunchedEffect(Unit) {
-        delay(200)
-        visible.value = true
+    Scaffold { paddingValues ->
+        Map(modifier = Modifier.padding(paddingValues))
+    }
+}
+
+@SuppressLint("MissingPermission")
+@Composable
+fun Map(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+    val locationState = remember { mutableStateOf<Location?>(null) }
+    val mapView = remember {
+        MapView(context).apply {
+            onCreate(null)
+        }
     }
 
-    Scaffold(
-        // Using Scaffold to provide snackBar support
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
-    ) {
-        // Using LazyColumn to display a list of items (Just for lazy column Testing)
-        // The LazyColumn will be animated in from the right side to left
-        AnimatedVisibility(
-            visible = visible.value,
-            // Using slideInHorizontally to animate the entry of the LazyColumn
-            enter = slideInHorizontally(
-                // animation duration of 200 milliseconds
-                animationSpec = tween(200)
-                // fullWidth -> fullWidth // The animation will slide in from the right side
-                // -fullWidth meaning leftSide
-            ) { fullWidth -> fullWidth } + fadeIn(tween(1000))
-        ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+    val locationRequest = remember {
+        LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 0L)
+            .setMinUpdateIntervalMillis(0L)
+            .setMinUpdateDistanceMeters(1f)
+            .build()
+    }
 
-                ) {
-                // Adding a sticky header at the top of the LazyColumn
-                stickyHeader {
-                    Text(
-                        text = "First",
-                        color = Color.Black,
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.LightGray)
-                    )
+    val locationCallback = rememberUpdatedState(
+        object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                result.locations.forEach {
+                    locationState.value = it
+                    Log.d("Location", "Updated: $it")
                 }
-                item {
-                    // Using ConstraintLayout to arrange the UI elements
-                    ConstraintLayout(
-                        modifier = Modifier.fillMaxWidth()
-                            .wrapContentHeight()
-                            .background(Color.White)
-                            .padding(horizontal = 8.dp)
-                    ) {
-                        val (image, back ) = createRefs()
+            }
+        }
+    )
 
-                        CounterImage(
-                            painter = data.value.imageURL,
-                            modifier = Modifier.constrainAs(image) {
-                                top.linkTo(parent.top)
-                                start.linkTo(parent.start)
-                                end.linkTo(parent.end)
-                            }
-                        )
+    // MapView lifecycle
+    DisposableEffect(lifecycle, mapView) {
+        val observer = object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) = mapView.onStart()
+            override fun onResume(owner: LifecycleOwner) = mapView.onResume()
+            override fun onPause(owner: LifecycleOwner) = mapView.onPause()
+            override fun onStop(owner: LifecycleOwner) = mapView.onStop()
+            override fun onDestroy(owner: LifecycleOwner) = mapView.onDestroy()
+        }
 
-                        ActionButton(
-                            modifier = Modifier
-                                .constrainAs(back) {
-                                    top.linkTo(image.bottom)
-                                    start.linkTo(parent.start)
-                                    end.linkTo(parent.end)
-                                },
-                            onClick = onBack,
-                            contentColor = Color.White,
-                            containerColor = Color.LightGray,
-                            content = "First Screen Back"
-                        )
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
 
-                    }
+    // Subscribe to location updates
+    DisposableEffect(Unit) {
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback.value,
+            Looper.getMainLooper()
+        )
 
-                    ShowMessage(
-                        viewModel = viewModel,
-                        snackBarHostState = snackBarHostState
-                    )
-                }
+        onDispose {
+            fusedLocationClient.removeLocationUpdates(locationCallback.value)
+        }
+    }
+
+    var googleMap by remember { mutableStateOf<GoogleMap?>(null) }
+    var isCameraMoved by remember { mutableStateOf(false) }
+
+    var selectedMapType by remember { mutableIntStateOf(GoogleMap.MAP_TYPE_NORMAL) }
+    Box(modifier = modifier.fillMaxSize()) {
+        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize()) { view ->
+            view.getMapAsync { map ->
+                googleMap = map
+                map.uiSettings.isZoomControlsEnabled = true
+                map.isTrafficEnabled = true
+                map.isMyLocationEnabled = true
+                map.mapType = selectedMapType
+            }
+        }
+
+        MapTypeDropdown(
+            selectedMapType = selectedMapType,
+            onMapTypeSelected = {
+                selectedMapType = it
+                googleMap?.mapType = it
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 10.dp, bottom = 100.dp)
+        )
+
+    }
+
+    LaunchedEffect(locationState.value) {
+        val loc = locationState.value ?: return@LaunchedEffect
+        val newLatLng = LatLng(loc.latitude, loc.longitude)
+
+        googleMap?.let { map ->
+            if (!isCameraMoved) {
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(newLatLng, 18f))
+                isCameraMoved = true
             }
 
         }
-
     }
 }
-
-
 @Composable
-private fun CounterImage(painter: String?, modifier: Modifier) {
-    // Using AsyncImage from coil to load an image from a URL
-    AsyncImage(
-        model = painter?: "",
-        contentDescription = "Counter Image",
-        contentScale = ContentScale.Crop,
-        modifier = modifier
-            .size(120.dp)
-            .clip(CircleShape)
-            .background(Color.LightGray)
-    )
-}
-
-
-@Composable
-@Stable
-private fun ActionButton(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    contentColor: Color = Color.White,
-    containerColor: Color,
-    content: String
+fun MapTypeDropdown(
+    selectedMapType: Int,
+    onMapTypeSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    // Using rememberUpdatedState to ensure the onClick lambda is always up-to-date and does not cause recomposition issues
-    val currentOnClick by rememberUpdatedState(onClick)
-    Button(
-        onClick = currentOnClick,
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
-            contentColor = contentColor
-        ),
-        content = { Text(content) }
+    var expanded by remember { mutableStateOf(false) }
+
+    val mapTypes = listOf(
+        "Normal" to GoogleMap.MAP_TYPE_NORMAL,
+        "Satellite" to GoogleMap.MAP_TYPE_SATELLITE,
+        "Terrain" to GoogleMap.MAP_TYPE_TERRAIN,
+        "Hybrid" to GoogleMap.MAP_TYPE_HYBRID
     )
-}
+    val selectedIcon = when (selectedMapType) {
+        GoogleMap.MAP_TYPE_NORMAL -> Icons.Default.Map
+        GoogleMap.MAP_TYPE_SATELLITE -> Icons.Default.Satellite
+        GoogleMap.MAP_TYPE_TERRAIN -> Icons.Default.Terrain
+        GoogleMap.MAP_TYPE_HYBRID -> Icons.Default.Layers
+        GoogleMap.MAP_TYPE_NONE -> Icons.Default.Block
+        else -> Icons.Default.Map
+    }
 
 
-@Composable
-private fun ShowMessage(
-    viewModel: HomeViewModel,
-    snackBarHostState: SnackbarHostState,
-) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        viewModel.toastEvent.collect { message ->
-            showMessage(
-                message = message.toastMessage,
-                snackBarHostState = snackBarHostState,
-                context = context,
-                scope = scope
+
+    Box(modifier = modifier.wrapContentSize(Alignment.TopStart)) {
+        Button(
+            onClick = { expanded = true },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Green,
+                contentColor = Color.White
+            ),
+            modifier = Modifier.size(50.dp),
+            shape = CircleShape,
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            Icon(
+                imageVector = selectedIcon,
+                contentDescription = "Map Type Icon",
+                modifier = Modifier.size(24.dp)
             )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            mapTypes.forEach { (label, type) ->
+                DropdownMenuItem(
+                    text = { Text(text = label) },
+                    onClick = {
+                        onMapTypeSelected(type)
+                        expanded = false
+                    }
+                )
+
+            }
         }
     }
 }
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun HomeScreenPreview() {
-    ThirdScreen(onBack = {})
+private fun DropdownPreview() {
+    MapTypeDropdown(
+        selectedMapType = 1,
+        onMapTypeSelected = {}
+    )
 }

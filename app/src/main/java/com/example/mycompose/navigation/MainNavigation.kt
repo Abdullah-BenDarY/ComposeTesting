@@ -1,6 +1,7 @@
 package com.example.mycompose.navigation
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.view.Window
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -24,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
@@ -42,7 +44,7 @@ fun MainNavigation(window: Window) {
                 statusBarColor = statusBarColor,
                 navigationBarColor = statusBarColor
             )
-            SetSystemBarIconColors(window)
+            SetSystemBarIconColors(window = window, isDarkTheme = isDark)
             NavHost(
                 navController = navController,
                 startDestination = Screen.Splash,
@@ -63,15 +65,12 @@ fun SystemBarsBackgrounds(
     navigationBarColor: Color
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // Status bar background
         Box(
             Modifier
                 .fillMaxWidth()
                 .background(statusBarColor)
                 .windowInsetsPadding(WindowInsets.statusBars)
         )
-
-        // Navigation bar background
         Box(
             Modifier
                 .fillMaxWidth()
@@ -80,15 +79,22 @@ fun SystemBarsBackgrounds(
         )
     }
 }
+
 @Composable
-fun SetSystemBarIconColors(window: Window) {
-    val isDarkTheme = isSystemInDarkTheme()
+fun SetSystemBarIconColors(window: Window, isDarkTheme: Boolean) {
     val view = LocalView.current
+
     SideEffect {
         val insetsController = WindowCompat.getInsetsController(window, view)
-        insetsController.isAppearanceLightStatusBars = !isDarkTheme
-        insetsController.isAppearanceLightNavigationBars = !isDarkTheme
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            insetsController.isAppearanceLightStatusBars = !isDarkTheme
+            insetsController.isAppearanceLightNavigationBars = !isDarkTheme
+        } else {
+            insetsController.isAppearanceLightStatusBars = !isDarkTheme
+            window.statusBarColor = if (isDarkTheme) Color.Black.toArgb() else Color.White.toArgb()
+            window.navigationBarColor = if (isDarkTheme) Color.Black.toArgb() else Color.White.toArgb()
+        }
     }
-}
+    }
 
 
